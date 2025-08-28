@@ -31,5 +31,5 @@ class CsvReader(ReaderBase):
         # 按照与 Excel 一致的格式返回
         content = []
         if list_data:
-            content.append({"type": "table", "ext": ".csv", "data": list_data})
+            content.append({"type": "table", "ext": ".table", "data": list_data})
         return content

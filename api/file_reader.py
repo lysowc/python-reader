@@ -6,6 +6,7 @@ from typing import List
 from service.file_reader.doc_reader import DocReader
 from service.file_reader.docx_reader import DocxReader
 from service.file_reader.pdf_reader import PDFReader
+from service.file_reader.csv_reader import CsvReader
 from service.file_reader.txt_reader import TxtReader
 from service.file_reader.xls_reader import XlsReader
 from service.file_reader.xlsx_reader import XlsxReader
@@ -19,6 +20,7 @@ def read_file(files: List[FileReader]):
         "doc": DocReader,
         "docx": DocxReader,
         "pdf": PDFReader,
+        "csv": CsvReader,
         "txt": TxtReader,
         "xls": XlsReader,
         "xlsx": XlsxReader,
