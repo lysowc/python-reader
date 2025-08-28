@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from schema.file_reader import FileReader, FileContent
 from schema.api import ApiResponse
 from util.response import returnJson
 from typing import List
+from service.file_reader.doc_reader import DocReader
 from service.file_reader.docx_reader import DocxReader
 from service.file_reader.pdf_reader import PDFReader
 from service.file_reader.txt_reader import TxtReader
@@ -15,11 +16,12 @@ router = APIRouter(prefix="/files", tags=["file"])
 @router.post("/read", response_model=ApiResponse[List[FileContent]])
 def read_file(files: List[FileReader]):
     readers = {
-        ".docx": DocxReader,
-        ".pdf": PDFReader,
-        ".txt": TxtReader,
-        ".xls": XlsReader,
-        ".xlsx": XlsxReader,
+        "doc": DocReader,
+        "docx": DocxReader,
+        "pdf": PDFReader,
+        "txt": TxtReader,
+        "xls": XlsReader,
+        "xlsx": XlsxReader,
     }
 
     result = []
@@ -32,9 +34,8 @@ def read_file(files: List[FileReader]):
                 result.extend(content)
             except Exception as e:
                 # 处理读取错误
-                pass
+                return returnJson(code=400, message=f"读取失败: {e}")
         else:
-            # 不支持的文件类型
-            pass
+            return returnJson(code=400, message=f"暂不支持的文件类型{ext}")
 
     return returnJson(data=result)

@@ -1,9 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 import importlib
 import pkgutil
 import api
 
-app = FastAPI(title="My Awesome API")
+app = FastAPI(title="identify api")
+
 
 def normalize_path(*parts):
     """
@@ -33,3 +34,13 @@ def register_router():
 
 
 register_router()
+
+from fastapi.exceptions import RequestValidationError
+from util.response import returnJson
+
+
+# 自定义异常处理器
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # 自定义错误响应格式
+    return returnJson(status_code=422, message=exc.errors())

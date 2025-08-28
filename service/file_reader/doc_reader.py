@@ -1,5 +1,5 @@
 from service.file_reader.base import ReaderBase
-from service.file_reader.xlsx_reader import XlsxReader
+from service.file_reader.docx_reader import DocxReader
 import tempfile
 import subprocess
 import os
@@ -9,12 +9,12 @@ from urllib.request import pathname2url
 from io import BytesIO
 
 
-class XlsReader(ReaderBase):
+class DocReader(ReaderBase):
     """
     日志渠道
     """
 
-    channel: str = "xls"
+    channel: str = "doc"
 
     def __init__(self):
         super().__init__()
@@ -26,7 +26,7 @@ class XlsReader(ReaderBase):
         file = None
         with tempfile.TemporaryDirectory() as tmpdir:
             # 保存文件到临时文件夹
-            file_name = self.generate_random_string() + ".xls"
+            file_name = self.generate_random_string() + ".doc"
             input_path = os.path.join(tmpdir, file_name)
             with open(input_path, "wb") as f:
                 f.write(self.file_stream.read())
@@ -38,7 +38,7 @@ class XlsReader(ReaderBase):
                 f"-env:UserInstallation={file_url}",
                 "--headless",
                 "--convert-to",
-                "xlsx",
+                "docx",
                 input_path,
                 "--outdir",
                 tmpdir,
@@ -56,11 +56,11 @@ class XlsReader(ReaderBase):
 
             # 构造输出路径（soffice 使用原文件名）
             stem = os.path.splitext(os.path.basename(input_path))[0]
-            output_path = os.path.join(tmpdir, f"{stem}.xlsx")
+            output_path = os.path.join(tmpdir, f"{stem}.docx")
             if not os.path.exists(output_path):
                 raise Exception("转换后文件未生成")
             with open(output_path, "rb") as f:
                 file = f.read()
             file = BytesIO(file)
-        reader = XlsxReader()
+        reader = DocxReader()
         return reader.read(file)
