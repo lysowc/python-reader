@@ -30,7 +30,8 @@ class XlsxReader(ReaderBase):
             # 读取单元格数据
             list_data = []
             for row in worksheet.iter_rows(values_only=True):
-                list_data.append(list(row))
+                if any(cell is not None for cell in row):  # 只要有一个非 None 就保留
+                    list_data.append(list(row))
             if list_data:
                 content.append({"type": "table", "ext": ".table", "data": list_data})
             for idx, image in enumerate(worksheet._images, 1):
