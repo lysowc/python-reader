@@ -16,29 +16,49 @@ class XlsxReader(ReaderBase):
         super().__init__()
 
     def read_bytes(self):
-        """
-        从字节流读取
-        """
         content = []
-        # 读取内容
         wb = load_workbook(filename=self.file_stream)
-        content = []
-        # 获取表格所有 sheet 名称
-        sheets = wb.sheetnames
-        for sheet in sheets:
-            worksheet = wb[sheet]
-            # 读取单元格数据
-            list_data = []
-            for row in worksheet.iter_rows(values_only=True):
-                if any(cell is not None for cell in row):  # 只要有一个非 None 就保留
-                    list_data.append(list(row))
-            if list_data:
-                content.append({"type": "table", "ext": ".table", "data": list_data})
-            for idx, image in enumerate(worksheet._images, 1):
+
+        for sheet_name in wb.sheetnames:
+            worksheet = wb[sheet_name]
+            # 第一步：遍历所有行，找出最大有效列数（基于非空单元格）
+            max_col_idx = 0
+            rows_data = []
+
+            for row in worksheet.iter_rows(
+                values_only=False
+            ):  # 注意：先用 cell 对象判断是否为空
+                # 找到该行最后一个非空单元格的索引
+                last_col = 0
+                row_values = []
+                for cell in row:
+                    row_values.append(cell.value)
+                    if cell.value is not None:
+                        last_col = cell.column  # column 是整数（A=1, B=2...）
+                if last_col > max_col_idx:
+                    max_col_idx = last_col
+                # 只保留至少有一个非空值的行
+                if any(v is not None for v in row_values):
+                    rows_data.append(row_values)
+
+            # 如果没有数据，跳过
+            if not rows_data or max_col_idx == 0:
+                continue
+
+            # 第二步：截断每行到最大有效列
+            trimmed_data = []
+            for row_vals in rows_data:
+                trimmed_row = row_vals[:max_col_idx]  # 截取前 max_col_idx 列
+                trimmed_data.append(trimmed_row)
+
+            if trimmed_data:
+                content.append({"type": "table", "ext": ".table", "data": trimmed_data})
+
+            # 第三步：读取图片（保持不变）
+            for image in worksheet._images:
                 image_data = image._data()
-                # 使用Pillow读取图片信息
                 img = Image.open(io.BytesIO(image_data))
-                image_ext = img.format.lower()  # 获取格式并转为小写
+                image_ext = img.format.lower()
                 img_data = base64.b64encode(image_data).decode("utf-8")
                 content.append(
                     {
@@ -47,4 +67,5 @@ class XlsxReader(ReaderBase):
                         "data": f"data:image/{image_ext};base64,{img_data}",
                     }
                 )
+
         return content
