@@ -6,14 +6,23 @@ from config.embedding import EmbeddingSettings
 # 读取配置
 embedding_settings = EmbeddingSettings()
 
-device = (
-    "cuda"
-    if torch.cuda.is_available()
-    else "mps" if torch.backends.mps.is_available() else "cpu"
-)
-model = SentenceTransformer(
-    embedding_settings.EMBEDDING_MODEL_PATH, device=device
-)
+# 自动选择设备
+if torch.cuda.is_available():
+    # 多 GPU 场景：轮询分配 worker 到不同 GPU
+    try:
+        import os
+
+        n_gpu = torch.cuda.device_count()
+        gpu_id = os.getpid() % n_gpu
+        device = f"cuda:{gpu_id}"
+    except Exception as e:
+        device = "cuda"
+elif torch.backends.mps.is_available():
+    device = "mps"  # Apple Silicon GPU
+else:
+    device = "cpu"
+
+model = SentenceTransformer(embedding_settings.EMBEDDING_MODEL_PATH, device=device)
 
 
 def embedding(text: str):
